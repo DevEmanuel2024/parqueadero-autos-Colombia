@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Autos Colombia</title>
+<style>
+body { font-family: Arial, sans-serif; background: #f2f2f2; margin: 0; }
+header { background: #1e3a8a; color: white; padding: 15px 30px; display: flex; justify-content: space-between; }
+header a { color: white; margin-left: 15px; }
+main { max-width: 900px; margin: 30px auto; padding: 0 15px; }
+.tarjetas { display: flex; gap: 30px; }
+.card { background: white; border: 1px solid #ccc; border-radius: 10px; padding: 20px; flex: 1; }
+input { width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box; }
+button { width: 100%; padding: 10px; border: none; color: white; border-radius: 6px; cursor: pointer; }
+.azul { background: #2563eb; } .verde { background: #16a34a; } .naranja { background: #ea580c; }
+.ok { color: green; } .error { color: red; }
+table { width: 100%; background: white; border-collapse: collapse; }
+th, td { padding: 8px; border: 1px solid #ddd; text-align: left; }
+</style>
+</head>
+<body>
+{% if session.id_usuario %}
+<header>
+  <b>Autos Colombia</b>
+  <span>{{ session.nombre }}
+    <a href="/">Entrada y salida</a>
+    <a href="/consultas">Consultas</a>
+    <a href="/logout">Cerrar sesión</a>
+  </span>
+</header>
+{% endif %}
+<main>
+{% for tipo, texto in get_flashed_messages() %}
+  <p class="{{ tipo }}">{{ texto }}</p>
+{% endfor %}
+{% block contenido %}{% endblock %}
+</main>
+</body>
+</html>

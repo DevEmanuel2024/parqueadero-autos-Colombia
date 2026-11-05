@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block contenido %}
+<h3>Vehículos dentro</h3>
+<table>
+  <tr><th>Placa</th><th>Celda</th><th>Hora de entrada</th></tr>
+  {% for f in dentro %}
+  <tr><td>{{ f.placa }}</td><td>{{ f.codigo }}</td><td>{{ f.fecha_entrada }}</td></tr>
+  {% endfor %}
+</table>
+
+<h3>Historial de movimientos</h3>
+<form method="get">
+  Placa <input name="placa" value="{{ placa }}">
+  Desde <input type="date" name="desde" value="{{ desde }}">
+  Hasta <input type="date" name="hasta" value="{{ hasta }}">
+  <button class="azul">Buscar</button>
+</form>
+<br>
+<table>
+  <tr><th>Placa</th><th>Celda</th><th>Entrada</th><th>Salida</th></tr>
+  {% for f in historial %}
+  <tr><td>{{ f.placa }}</td><td>{{ f.codigo }}</td><td>{{ f.fecha_entrada }}</td><td>{{ f.fecha_salida or "" }}</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}
