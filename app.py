@@ -90,6 +90,7 @@ def entrada():
     if not hay_sesion():
         return redirect("/login")
     placa = request.form["placa"].strip().upper()
+    tipo = request.form["tipo"]
     hoy = date.today().isoformat()
     con = conectar()
 
@@ -103,6 +104,8 @@ def entrada():
 
     if vehiculo is None:
         flash(("error", "La placa " + placa + " no está registrada"))
+    elif vehiculo["tipo"] != tipo:
+        flash(("error", "El tipo no coincide: la placa " + placa + " está registrada como " + vehiculo["tipo"]))
     elif mensualidad is None:
         flash(("error", "La placa " + placa + " no tiene mensualidad vigente"))
     elif dentro is not None:
