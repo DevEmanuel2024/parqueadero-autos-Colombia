@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block contenido %}
+<div class="tarjetas">
+  <div class="card" style="max-width: 300px;">
+    <h3>Registrar usuario</h3>
+    <form method="post" action="/usuarios/nuevo">
+      <input name="nombre" placeholder="Nombre" required>
+      <input name="username" placeholder="Usuario" required>
+      <input name="password" type="password" placeholder="Contraseña" required>
+      <select name="rol">
+        <option value="operario">Operario</option>
+        <option value="administrador">Administrador</option>
+      </select>
+      <button class="azul">Guardar</button>
+    </form>
+  </div>
+  <div class="card">
+    <h3>Usuarios registrados</h3>
+    <table>
+      <tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr>
+      {% for u in usuarios %}
+      <tr>
+        <td>{{ u.nombre }}</td>
+        <td>{{ u.username }}</td>
+        <td>{{ u.rol }}</td>
+        <td>{{ "Activo" if u.activo == 1 else "Inactivo" }}</td>
+        <td>
+          <a href="/usuarios/editar/{{ u.id_usuario }}">Editar</a>
+          <form method="post" action="/usuarios/estado/{{ u.id_usuario }}">
+            <button class="gris">{{ "Desactivar" if u.activo == 1 else "Activar" }}</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+{% endblock %}

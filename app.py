@@ -22,10 +22,12 @@ def crear_base():
     con = sqlite3.connect(RUTA)
     schema = os.path.join(os.path.dirname(RUTA), "schema.sql")
     con.executescript(open(schema, encoding="utf-8").read())
-    con.execute("INSERT INTO usuario(nombre, username, password, rol) VALUES (?,?,?,?)",
+    con.execute("INSERT INTO usuario(nombre, username, password, rol, activo) VALUES (?,?,?,?,1)",
                 ("Juan Perez", "operario", generate_password_hash("operario123"), "operario"))
-    con.execute("INSERT INTO usuario(nombre, username, password, rol) VALUES (?,?,?,?)",
+    con.execute("INSERT INTO usuario(nombre, username, password, rol, activo) VALUES (?,?,?,?,1)",
                 ("Ana Gomez", "admin", generate_password_hash("admin123"), "administrador"))
+    con.execute("INSERT INTO usuario(nombre, username, password, rol, activo) VALUES (?,?,?,?,0)",
+                ("Pedro Ruiz", "pruiz", generate_password_hash("pedro123"), "operario"))
     for i in range(1, 11):
         con.execute("INSERT INTO celda(codigo) VALUES (?)", ("A-%02d" % i,))
     con.execute("INSERT INTO vehiculo VALUES ('ABC123', 'carro')")
@@ -42,6 +44,12 @@ def hay_sesion():
     return "id_usuario" in session
 
 
+def es_admin():
+    return session.get("rol") == "administrador"
+
+
+# ---------------- login ----------------
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     error = None
@@ -50,12 +58,15 @@ def login():
         usuario = con.execute("SELECT * FROM usuario WHERE username = ?",
                               (request.form["username"],)).fetchone()
         con.close()
-        if usuario and check_password_hash(usuario["password"], request.form["password"]):
+        if usuario is None or not check_password_hash(usuario["password"], request.form["password"]):
+            error = "Usuario o contraseña incorrectos"
+        elif usuario["activo"] == 0:
+            error = "El usuario está desactivado"
+        else:
             session["id_usuario"] = usuario["id_usuario"]
             session["nombre"] = usuario["nombre"]
             session["rol"] = usuario["rol"]
             return redirect("/")
-        error = "Usuario o contraseña incorrectos"
     return render_template("login.html", error=error)
 
 
@@ -64,6 +75,8 @@ def logout():
     session.clear()
     return redirect("/login")
 
+
+# ---------------- entrada y salida (iteración 1) ----------------
 
 @app.route("/")
 def inicio():
@@ -157,6 +170,108 @@ def consultas():
     con.close()
     return render_template("consultas.html", dentro=dentro, historial=historial,
                            placa=placa, desde=desde, hasta=hasta)
+
+
+# ---------------- gestión de usuarios (iteración 2) ----------------
+
+def revisar_admin():
+    # devuelve una redirección si no hay sesión o no es administrador
+    if not hay_sesion():
+        return redirect("/login")
+    if not es_admin():
+        flash(("error", "No tienes permiso para entrar a esta sección"))
+        return redirect("/")
+    return None
+
+
+@app.route("/usuarios")
+def usuarios():
+    bloqueo = revisar_admin()
+    if bloqueo:
+        return bloqueo
+    con = conectar()
+    lista = con.execute("SELECT * FROM usuario ORDER BY nombre").fetchall()
+    con.close()
+    return render_template("usuarios.html", usuarios=lista)
+
+
+@app.route("/usuarios/nuevo", methods=["POST"])
+def usuario_nuevo():
+    bloqueo = revisar_admin()
+    if bloqueo:
+        return bloqueo
+    nombre = request.form["nombre"].strip()
+    username = request.form["username"].strip()
+    password = request.form["password"]
+    rol = request.form["rol"]
+    con = conectar()
+    existe = con.execute("SELECT * FROM usuario WHERE username = ?", (username,)).fetchone()
+    if nombre == "" or username == "" or password == "":
+        flash(("error", "Todos los campos son obligatorios"))
+    elif existe:
+        flash(("error", "El nombre de usuario ya existe"))
+    else:
+        con.execute("INSERT INTO usuario(nombre, username, password, rol, activo) VALUES (?,?,?,?,1)",
+                    (nombre, username, generate_password_hash(password), rol))
+        con.commit()
+        flash(("ok", "Usuario registrado correctamente"))
+    con.close()
+    return redirect("/usuarios")
+
+
+@app.route("/usuarios/editar/<int:id>", methods=["GET", "POST"])
+def usuario_editar(id):
+    bloqueo = revisar_admin()
+    if bloqueo:
+        return bloqueo
+    con = conectar()
+    usuario = con.execute("SELECT * FROM usuario WHERE id_usuario = ?", (id,)).fetchone()
+    if usuario is None:
+        con.close()
+        return redirect("/usuarios")
+    if request.method == "POST":
+        nombre = request.form["nombre"].strip()
+        username = request.form["username"].strip()
+        password = request.form["password"]
+        rol = request.form["rol"]
+        otro = con.execute("SELECT * FROM usuario WHERE username = ? AND id_usuario != ?",
+                           (username, id)).fetchone()
+        if nombre == "" or username == "":
+            flash(("error", "El nombre y el usuario son obligatorios"))
+        elif otro:
+            flash(("error", "El nombre de usuario ya existe"))
+        else:
+            con.execute("UPDATE usuario SET nombre = ?, username = ?, rol = ? WHERE id_usuario = ?",
+                        (nombre, username, rol, id))
+            if password != "":
+                con.execute("UPDATE usuario SET password = ? WHERE id_usuario = ?",
+                            (generate_password_hash(password), id))
+            con.commit()
+            con.close()
+            flash(("ok", "Usuario actualizado"))
+            return redirect("/usuarios")
+    con.close()
+    return render_template("editar_usuario.html", usuario=usuario)
+
+
+@app.route("/usuarios/estado/<int:id>", methods=["POST"])
+def usuario_estado(id):
+    bloqueo = revisar_admin()
+    if bloqueo:
+        return bloqueo
+    con = conectar()
+    usuario = con.execute("SELECT * FROM usuario WHERE id_usuario = ?", (id,)).fetchone()
+    if usuario is None:
+        flash(("error", "El usuario no existe"))
+    elif usuario["id_usuario"] == session["id_usuario"]:
+        flash(("error", "No puedes desactivar tu propio usuario"))
+    else:
+        nuevo = 0 if usuario["activo"] == 1 else 1
+        con.execute("UPDATE usuario SET activo = ? WHERE id_usuario = ?", (nuevo, id))
+        con.commit()
+        flash(("ok", "Usuario " + ("activado" if nuevo == 1 else "desactivado")))
+    con.close()
+    return redirect("/usuarios")
 
 
 if __name__ == "__main__":

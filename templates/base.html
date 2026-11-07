@@ -5,28 +5,40 @@
 <title>Autos Colombia</title>
 <style>
 body { font-family: Arial, sans-serif; background: #f2f2f2; margin: 0; }
-header { background: #1e3a8a; color: white; padding: 15px 30px; display: flex; justify-content: space-between; }
-header a { color: white; margin-left: 15px; }
-main { max-width: 900px; margin: 30px auto; padding: 0 15px; }
-.tarjetas { display: flex; gap: 30px; }
-.card { background: white; border: 1px solid #ccc; border-radius: 10px; padding: 20px; flex: 1; }
-input { width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box; }
-button { width: 100%; padding: 10px; border: none; color: white; border-radius: 6px; cursor: pointer; }
-.azul { background: #2563eb; } .verde { background: #16a34a; } .naranja { background: #ea580c; }
-.ok { color: green; } .error { color: red; }
-table { width: 100%; background: white; border-collapse: collapse; }
-th, td { padding: 8px; border: 1px solid #ddd; text-align: left; }
+header { background: #1e3a8a; color: white; padding: 18px 40px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 14px; }
+header a { color: white; text-decoration: none; margin-left: 18px; font-weight: normal; }
+main { max-width: 950px; margin: 40px auto; padding: 0 15px; }
+.tarjetas { display: flex; gap: 40px; align-items: flex-start; }
+.card { background: white; border: 1px solid #d1d5db; border-radius: 12px; padding: 24px; flex: 1; }
+.card h3 { text-align: center; }
+input, select { width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box; border: 1px solid #9ca3af; border-radius: 8px; }
+button { padding: 10px; border: none; color: white; border-radius: 8px; cursor: pointer; font-weight: bold; }
+.card button { width: 100%; padding: 12px; }
+.azul { background: #2563eb; } .verde { background: #16a34a; } .naranja { background: #ea580c; } .gris { background: #6b7280; }
+.ok { color: #15803d; font-weight: bold; text-align: center; } .error { color: #dc2626; font-weight: bold; text-align: center; }
+table { width: 100%; background: #d9d9d9; border-collapse: collapse; border-radius: 10px; }
+th, td { padding: 10px; text-align: center; }
+td form { display: inline; }
+td button { padding: 5px 10px; }
+.pestanas { text-align: center; margin-bottom: 25px; }
+.pestanas a { display: inline-block; width: 160px; padding: 10px 0; margin: 0 8px; border: 1px solid #9ca3af; border-radius: 8px; background: white; color: black; text-decoration: none; font-weight: bold; font-size: 13px; }
+.pestanas a.activa { background: #2563eb; color: white; border-color: #2563eb; }
+.filtros { max-width: 230px; margin: 0 auto; text-align: center; }
+h3.centro { text-align: center; }
 </style>
 </head>
 <body>
 {% if session.id_usuario %}
 <header>
-  <b>Autos Colombia</b>
-  <span>{{ session.nombre }}
+  <span>Autos Colombia
     <a href="/">Entrada y salida</a>
     <a href="/consultas">Consultas</a>
-    <a href="/logout">Cerrar sesión</a>
+    {% if session.rol == "administrador" %}
+    <a href="/usuarios">Usuarios</a>
+    {% endif %}
   </span>
+  <span>{{ "Administrador" if session.rol == "administrador" else "Operario" }}: {{ session.nombre }}</span>
+  <a href="/logout">Cerrar sesión</a>
 </header>
 {% endif %}
 <main>

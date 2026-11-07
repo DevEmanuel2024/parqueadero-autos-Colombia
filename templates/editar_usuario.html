@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block contenido %}
+<div class="card" style="max-width: 350px; margin: 30px auto;">
+  <h3>Editar usuario</h3>
+  <form method="post">
+    <input name="nombre" value="{{ usuario.nombre }}" required>
+    <input name="username" value="{{ usuario.username }}" required>
+    <input name="password" type="password" placeholder="Nueva contraseña (opcional)">
+    <select name="rol">
+      <option value="operario" {% if usuario.rol == "operario" %}selected{% endif %}>Operario</option>
+      <option value="administrador" {% if usuario.rol == "administrador" %}selected{% endif %}>Administrador</option>
+    </select>
+    <button class="azul">Guardar cambios</button>
+  </form>
+  <p><a href="/usuarios">Volver</a></p>
+</div>
+{% endblock %}

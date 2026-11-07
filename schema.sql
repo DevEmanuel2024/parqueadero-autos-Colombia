@@ -3,7 +3,8 @@ CREATE TABLE usuario (
     nombre TEXT NOT NULL,
     username TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
-    rol TEXT NOT NULL
+    rol TEXT NOT NULL,
+    activo INTEGER NOT NULL DEFAULT 1
 );
 CREATE TABLE vehiculo (
     placa TEXT PRIMARY KEY,
