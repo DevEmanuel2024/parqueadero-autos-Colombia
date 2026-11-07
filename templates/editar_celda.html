@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block contenido %}
+<div class="card" style="max-width: 350px; margin: 30px auto;">
+  <h3>Editar celda</h3>
+  <form method="post">
+    <input name="codigo" value="{{ celda.codigo }}" required>
+    <button class="azul">Guardar cambios</button>
+  </form>
+  <p><a href="/celdas">Volver</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block contenido %}
+<div class="tarjetas">
+  <div class="card" style="max-width: 300px;">
+    <h3>Registrar celda</h3>
+    <form method="post" action="/celdas/nueva">
+      <input name="codigo" placeholder="Código (ej: A-11)" required>
+      <button class="azul">Guardar</button>
+    </form>
+  </div>
+  <div class="card">
+    <h3>Celdas del parqueadero</h3>
+    <table>
+      <tr><th>Código</th><th>Estado</th><th>Acciones</th></tr>
+      {% for c in celdas %}
+      <tr>
+        <td>{{ c.codigo }}</td>
+        <td>{{ c.estado }}</td>
+        <td>
+          <a href="/celdas/editar/{{ c.id_celda }}">Editar</a>
+          <form method="post" action="/celdas/estado/{{ c.id_celda }}">
+            <button class="gris">{{ "Habilitar" if c.estado == "inhabilitada" else "Inhabilitar" }}</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+{% endblock %}

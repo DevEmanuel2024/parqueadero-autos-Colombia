@@ -35,6 +35,7 @@ h3.centro { text-align: center; }
     <a href="/consultas">Consultas</a>
     {% if session.rol == "administrador" %}
     <a href="/usuarios">Usuarios</a>
+    <a href="/celdas">Celdas</a>
     {% endif %}
   </span>
   <span>{{ "Administrador" if session.rol == "administrador" else "Operario" }}: {{ session.nombre }}</span>

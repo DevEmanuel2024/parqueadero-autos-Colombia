@@ -274,6 +274,90 @@ def usuario_estado(id):
     return redirect("/usuarios")
 
 
+# ---------------- gestión de celdas (iteración 2) ----------------
+
+@app.route("/celdas")
+def celdas():
+    bloqueo = revisar_admin()
+    if bloqueo:
+        return bloqueo
+    con = conectar()
+    lista = con.execute("SELECT * FROM celda ORDER BY codigo").fetchall()
+    con.close()
+    return render_template("celdas.html", celdas=lista)
+
+
+@app.route("/celdas/nueva", methods=["POST"])
+def celda_nueva():
+    bloqueo = revisar_admin()
+    if bloqueo:
+        return bloqueo
+    codigo = request.form["codigo"].strip().upper()
+    con = conectar()
+    existe = con.execute("SELECT * FROM celda WHERE codigo = ?", (codigo,)).fetchone()
+    if codigo == "":
+        flash(("error", "Escribe un código para la celda"))
+    elif existe:
+        flash(("error", "El código ya existe"))
+    else:
+        con.execute("INSERT INTO celda(codigo, estado) VALUES (?, 'disponible')", (codigo,))
+        con.commit()
+        flash(("ok", "Celda registrada"))
+    con.close()
+    return redirect("/celdas")
+
+
+@app.route("/celdas/editar/<int:id>", methods=["GET", "POST"])
+def celda_editar(id):
+    bloqueo = revisar_admin()
+    if bloqueo:
+        return bloqueo
+    con = conectar()
+    celda = con.execute("SELECT * FROM celda WHERE id_celda = ?", (id,)).fetchone()
+    if celda is None:
+        con.close()
+        return redirect("/celdas")
+    if celda["estado"] == "ocupada":
+        con.close()
+        flash(("error", "No se puede editar una celda ocupada"))
+        return redirect("/celdas")
+    if request.method == "POST":
+        codigo = request.form["codigo"].strip().upper()
+        otra = con.execute("SELECT * FROM celda WHERE codigo = ? AND id_celda != ?", (codigo, id)).fetchone()
+        if codigo == "":
+            flash(("error", "Escribe un código para la celda"))
+        elif otra:
+            flash(("error", "El código ya existe"))
+        else:
+            con.execute("UPDATE celda SET codigo = ? WHERE id_celda = ?", (codigo, id))
+            con.commit()
+            con.close()
+            flash(("ok", "Celda actualizada"))
+            return redirect("/celdas")
+    con.close()
+    return render_template("editar_celda.html", celda=celda)
+
+
+@app.route("/celdas/estado/<int:id>", methods=["POST"])
+def celda_estado(id):
+    bloqueo = revisar_admin()
+    if bloqueo:
+        return bloqueo
+    con = conectar()
+    celda = con.execute("SELECT * FROM celda WHERE id_celda = ?", (id,)).fetchone()
+    if celda is None:
+        flash(("error", "La celda no existe"))
+    elif celda["estado"] == "ocupada":
+        flash(("error", "No se puede inhabilitar una celda ocupada"))
+    else:
+        nuevo = "inhabilitada" if celda["estado"] == "disponible" else "disponible"
+        con.execute("UPDATE celda SET estado = ? WHERE id_celda = ?", (nuevo, id))
+        con.commit()
+        flash(("ok", "La celda " + celda["codigo"] + " quedó " + nuevo))
+    con.close()
+    return redirect("/celdas")
+
+
 if __name__ == "__main__":
     crear_base()
     app.run(debug=True)
