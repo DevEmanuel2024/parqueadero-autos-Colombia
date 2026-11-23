@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block contenido %}
+<div class="card comprobante" style="max-width: 420px; margin: 0 auto;">
+  <h3>Comprobante de pago</h3>
+  <p><b>Número:</b> {{ "P-%04d"|format(pago.id_pago) }}</p>
+  <p><b>Placa:</b> {{ pago.placa }}</p>
+  <p><b>Valor:</b> {{ pago.valor|pesos }}</p>
+  <p><b>Medio de pago:</b> {{ pago.medio }}</p>
+  <p><b>Periodo cubierto:</b> {{ pago.fecha_inicio }} al {{ pago.fecha_fin }}</p>
+  <p><b>Fecha del pago:</b> {{ pago.fecha_pago }}</p>
+  <p><b>Registrado por:</b> {{ pago.cajero }}</p>
+  <div class="no-imprimir">
+    <button class="azul" onclick="window.print()">Imprimir</button>
+    <br><br>
+    <a href="/pagos"><button class="verde">Nuevo pago</button></a>
+  </div>
+</div>
+{% endblock %}

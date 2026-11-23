@@ -456,6 +456,78 @@ def tarifa_guardar():
     return redirect("/tarifas")
 
 
+# ---------------- pagos (iteración 3) ----------------
+
+@app.route("/pagos")
+def pagos():
+    if not hay_sesion():
+        return redirect("/login")
+    con = conectar()
+    lista_tarifas = con.execute("SELECT * FROM tarifa").fetchall()
+    lista_vehiculos = con.execute("SELECT * FROM vehiculo").fetchall()
+    con.close()
+    return render_template("pagos.html", tarifas=lista_tarifas, vehiculos=lista_vehiculos)
+
+
+@app.route("/pagos/nuevo", methods=["POST"])
+def pago_nuevo():
+    if not hay_sesion():
+        return redirect("/login")
+    placa = request.form["placa"].strip().upper()
+    medio = request.form["medio"]
+    con = conectar()
+    vehiculo = con.execute("SELECT * FROM vehiculo WHERE placa = ?", (placa,)).fetchone()
+    if vehiculo is None:
+        con.close()
+        flash(("error", "La placa " + placa + " no está registrada"))
+        return redirect("/pagos")
+    if medio not in ("efectivo", "transferencia"):
+        con.close()
+        flash(("error", "Elige un medio de pago válido"))
+        return redirect("/pagos")
+    tarifa = con.execute("SELECT * FROM tarifa WHERE tipo = ?", (vehiculo["tipo"],)).fetchone()
+    if tarifa is None:
+        con.close()
+        flash(("error", "El tipo " + vehiculo["tipo"] + " no tiene tarifa"))
+        return redirect("/pagos")
+
+    # si ya tiene mensualidad vigente, la nueva empieza el día siguiente a que termine
+    hoy = date.today()
+    ultima = con.execute("SELECT MAX(fecha_fin) FROM mensualidad WHERE placa = ?", (placa,)).fetchone()[0]
+    if ultima is not None and ultima >= hoy.isoformat():
+        inicio = date.fromisoformat(ultima) + timedelta(days=1)
+    else:
+        inicio = hoy
+    fin = inicio + timedelta(days=29)
+
+    cursor = con.execute("INSERT INTO mensualidad(placa, fecha_inicio, fecha_fin) VALUES (?,?,?)",
+                         (placa, inicio.isoformat(), fin.isoformat()))
+    id_mensualidad = cursor.lastrowid
+    ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    cursor = con.execute("""INSERT INTO pago(placa, id_usuario, id_mensualidad, valor, medio, fecha_pago)
+                            VALUES (?,?,?,?,?,?)""",
+                         (placa, session["id_usuario"], id_mensualidad, tarifa["valor"], medio, ahora))
+    id_pago = cursor.lastrowid
+    con.commit()
+    con.close()
+    return redirect("/comprobante/" + str(id_pago))
+
+
+@app.route("/comprobante/<int:id>")
+def comprobante(id):
+    if not hay_sesion():
+        return redirect("/login")
+    con = conectar()
+    pago = con.execute("""SELECT pago.*, usuario.nombre AS cajero, mensualidad.fecha_inicio, mensualidad.fecha_fin
+                          FROM pago JOIN usuario ON usuario.id_usuario = pago.id_usuario
+                          JOIN mensualidad ON mensualidad.id_mensualidad = pago.id_mensualidad
+                          WHERE pago.id_pago = ?""", (id,)).fetchone()
+    con.close()
+    if pago is None:
+        return redirect("/pagos")
+    return render_template("comprobante.html", pago=pago)
+
+
 if __name__ == "__main__":
     crear_base()
     app.run(debug=True)

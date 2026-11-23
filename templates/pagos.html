@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block contenido %}
+<div class="card" style="max-width: 380px; margin: 0 auto;">
+  <h3>Registrar pago</h3>
+  <form method="post" action="/pagos/nuevo">
+    <input name="placa" id="placa" placeholder="Placa (ej: ABC123)" required>
+    <select name="medio">
+      <option value="efectivo">Medio de pago: Efectivo</option>
+      <option value="transferencia">Medio de pago: Transferencia</option>
+    </select>
+    <p class="valor" id="valor">Valor a pagar: -</p>
+    <button class="verde">Registrar pago</button>
+  </form>
+</div>
+
+<script>
+var tipos = { {% for v in vehiculos %}"{{ v.placa }}": "{{ v.tipo }}", {% endfor %} };
+var tarifas = { {% for t in tarifas %}"{{ t.tipo }}": {{ t.valor }}, {% endfor %} };
+document.getElementById("placa").addEventListener("input", function () {
+  var tipo = tipos[this.value.trim().toUpperCase()];
+  var texto = "Valor a pagar: -";
+  if (tipo) {
+    texto = "Valor a pagar: $" + tarifas[tipo].toLocaleString("es-CO");
+  }
+  document.getElementById("valor").textContent = texto;
+});
+</script>
+{% endblock %}
