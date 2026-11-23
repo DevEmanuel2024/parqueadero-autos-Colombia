@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block contenido %}
+<h3 class="centro">Consultar pagos</h3>
+<form method="get" class="filtros">
+  <input name="placa" placeholder="Placa" value="{{ placa }}">
+  <input type="date" name="desde" value="{{ desde }}" title="Fecha desde">
+  <input type="date" name="hasta" value="{{ hasta }}" title="Fecha hasta">
+  <button class="azul" style="width: 120px;">Buscar</button>
+</form>
+<br>
+{% if pagos %}
+<table>
+  <tr><th>Número</th><th>Placa</th><th>Valor</th><th>Medio</th><th>Periodo</th><th>Fecha de pago</th></tr>
+  {% for p in pagos %}
+  <tr>
+    <td>{{ "P-%04d"|format(p.id_pago) }}</td>
+    <td>{{ p.placa }}</td>
+    <td>{{ p.valor|pesos }}</td>
+    <td>{{ p.medio }}</td>
+    <td>{{ p.fecha_inicio }} al {{ p.fecha_fin }}</td>
+    <td>{{ p.fecha_pago }}</td>
+  </tr>
+  {% endfor %}
+</table>
+<p class="valor">Total: {{ total|pesos }}</p>
+{% else %}
+<p class="error">Sin resultados</p>
+{% endif %}
+{% endblock %}

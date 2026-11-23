@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block contenido %}
+<h3 class="centro">Mensualidades vencidas</h3>
+{% if vencidas %}
+<table>
+  <tr><th>Placa</th><th>Tipo</th><th>Venció el</th></tr>
+  {% for v in vencidas %}
+  <tr><td>{{ v.placa }}</td><td>{{ v.tipo }}</td><td>{{ v.fin }}</td></tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="ok">No hay mensualidades vencidas</p>
+{% endif %}
+
+<h3 class="centro">Vencen en los próximos 5 días</h3>
+{% if por_vencer %}
+<table>
+  <tr><th>Placa</th><th>Tipo</th><th>Vence el</th></tr>
+  {% for v in por_vencer %}
+  <tr><td>{{ v.placa }}</td><td>{{ v.tipo }}</td><td>{{ v.fin }}</td></tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="ok">No hay mensualidades por vencer</p>
+{% endif %}
+{% endblock %}

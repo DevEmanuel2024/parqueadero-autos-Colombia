@@ -528,6 +528,59 @@ def comprobante(id):
     return render_template("comprobante.html", pago=pago)
 
 
+# ---------------- consulta de pagos y vencimientos (iteración 3) ----------------
+
+@app.route("/pagos/consultar")
+def pagos_consultar():
+    if not hay_sesion():
+        return redirect("/login")
+    placa = request.args.get("placa", "").strip().upper()
+    desde = request.args.get("desde", "")
+    hasta = request.args.get("hasta", "")
+    consulta = """SELECT pago.*, mensualidad.fecha_inicio, mensualidad.fecha_fin
+                  FROM pago JOIN mensualidad ON mensualidad.id_mensualidad = pago.id_mensualidad
+                  WHERE 1 = 1"""
+    datos = []
+    if placa != "":
+        consulta += " AND pago.placa = ?"
+        datos.append(placa)
+    if desde != "":
+        consulta += " AND date(pago.fecha_pago) >= ?"
+        datos.append(desde)
+    if hasta != "":
+        consulta += " AND date(pago.fecha_pago) <= ?"
+        datos.append(hasta)
+    con = conectar()
+    lista = con.execute(consulta + " ORDER BY pago.fecha_pago DESC", datos).fetchall()
+    con.close()
+    total = 0
+    for p in lista:
+        total = total + p["valor"]
+    return render_template("pagos_consultar.html", pagos=lista, total=total,
+                           placa=placa, desde=desde, hasta=hasta)
+
+
+@app.route("/vencimientos")
+def vencimientos():
+    if not hay_sesion():
+        return redirect("/login")
+    hoy = date.today()
+    limite = hoy + timedelta(days=5)
+    con = conectar()
+    filas = con.execute("""SELECT vehiculo.placa, vehiculo.tipo, MAX(mensualidad.fecha_fin) AS fin
+                           FROM vehiculo JOIN mensualidad ON mensualidad.placa = vehiculo.placa
+                           GROUP BY vehiculo.placa ORDER BY fin""").fetchall()
+    con.close()
+    vencidas = []
+    por_vencer = []
+    for f in filas:
+        if f["fin"] < hoy.isoformat():
+            vencidas.append(f)
+        elif f["fin"] <= limite.isoformat():
+            por_vencer.append(f)
+    return render_template("vencimientos.html", vencidas=vencidas, por_vencer=por_vencer)
+
+
 if __name__ == "__main__":
     crear_base()
     app.run(debug=True)
