@@ -5,8 +5,9 @@
 <title>Autos Colombia</title>
 <style>
 body { font-family: Arial, sans-serif; background: #f2f2f2; margin: 0; }
-header { background: #1e3a8a; color: white; padding: 18px 40px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 14px; }
-header a { color: white; text-decoration: none; margin-left: 18px; font-weight: normal; }
+header { background: #1e3a8a; color: white; padding: 14px 30px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 14px; gap: 20px; }
+header a { color: white; text-decoration: none; margin-left: 14px; font-weight: normal; font-size: 13px; white-space: nowrap; }
+.menu { display: flex; flex-wrap: wrap; align-items: center; }
 main { max-width: 950px; margin: 40px auto; padding: 0 15px; }
 .tarjetas { display: flex; gap: 40px; align-items: flex-start; }
 .card { background: white; border: 1px solid #d1d5db; border-radius: 12px; padding: 24px; flex: 1; }
@@ -25,17 +26,22 @@ td button { padding: 5px 10px; }
 .pestanas a.activa { background: #2563eb; color: white; border-color: #2563eb; }
 .filtros { max-width: 230px; margin: 0 auto; text-align: center; }
 h3.centro { text-align: center; }
+.valor { font-weight: bold; text-align: center; font-size: 18px; margin: 12px 0; }
+.comprobante p { margin: 6px 0; }
+@media print { header, .no-imprimir { display: none; } body { background: white; } }
 </style>
 </head>
 <body>
 {% if session.id_usuario %}
 <header>
-  <span>Autos Colombia
+  <span class="menu">Autos Colombia
     <a href="/">Entrada y salida</a>
     <a href="/consultas">Consultas</a>
+    <a href="/vehiculos">Vehículos</a>
     {% if session.rol == "administrador" %}
     <a href="/usuarios">Usuarios</a>
     <a href="/celdas">Celdas</a>
+    <a href="/tarifas">Tarifas</a>
     {% endif %}
   </span>
   <span>{{ "Administrador" if session.rol == "administrador" else "Operario" }}: {{ session.nombre }}</span>

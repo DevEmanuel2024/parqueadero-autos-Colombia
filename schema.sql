@@ -33,3 +33,19 @@ CREATE TABLE movimiento (
     FOREIGN KEY (id_celda) REFERENCES celda(id_celda),
     FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
 );
+CREATE TABLE tarifa (
+    tipo TEXT PRIMARY KEY,
+    valor INTEGER NOT NULL
+);
+CREATE TABLE pago (
+    id_pago INTEGER PRIMARY KEY AUTOINCREMENT,
+    placa TEXT NOT NULL,
+    id_usuario INTEGER NOT NULL,
+    id_mensualidad INTEGER NOT NULL,
+    valor INTEGER NOT NULL,
+    medio TEXT NOT NULL,
+    fecha_pago DATETIME NOT NULL,
+    FOREIGN KEY (placa) REFERENCES vehiculo(placa),
+    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario),
+    FOREIGN KEY (id_mensualidad) REFERENCES mensualidad(id_mensualidad)
+);

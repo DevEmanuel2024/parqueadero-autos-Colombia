@@ -1,6 +1,6 @@
 import os
 import sqlite3
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from flask import Flask, render_template, request, redirect, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -18,6 +18,7 @@ def conectar():
 
 def crear_base():
     if os.path.exists(RUTA):
+        agregar_tablas_pagos()
         return
     con = sqlite3.connect(RUTA)
     schema = os.path.join(os.path.dirname(RUTA), "schema.sql")
@@ -38,6 +39,34 @@ def crear_base():
     con.execute("INSERT INTO mensualidad(placa, fecha_inicio, fecha_fin) VALUES ('VEN000', '2026-01-01', '2026-02-01')")
     con.commit()
     con.close()
+    agregar_tablas_pagos()
+
+
+def agregar_tablas_pagos():
+    # por si la base ya existía de antes, crea las tablas nuevas sin borrar nada
+    con = sqlite3.connect(RUTA)
+    con.execute("CREATE TABLE IF NOT EXISTS tarifa (tipo TEXT PRIMARY KEY, valor INTEGER NOT NULL)")
+    con.execute("""CREATE TABLE IF NOT EXISTS pago (
+        id_pago INTEGER PRIMARY KEY AUTOINCREMENT,
+        placa TEXT NOT NULL,
+        id_usuario INTEGER NOT NULL,
+        id_mensualidad INTEGER NOT NULL,
+        valor INTEGER NOT NULL,
+        medio TEXT NOT NULL,
+        fecha_pago DATETIME NOT NULL,
+        FOREIGN KEY (placa) REFERENCES vehiculo(placa),
+        FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario),
+        FOREIGN KEY (id_mensualidad) REFERENCES mensualidad(id_mensualidad))""")
+    if con.execute("SELECT COUNT(*) FROM tarifa").fetchone()[0] == 0:
+        con.execute("INSERT INTO tarifa VALUES ('carro', 120000)")
+        con.execute("INSERT INTO tarifa VALUES ('moto', 80000)")
+    con.commit()
+    con.close()
+
+
+@app.template_filter("pesos")
+def pesos(valor):
+    return "$" + "{:,.0f}".format(valor).replace(",", ".")
 
 
 def hay_sesion():
@@ -359,6 +388,72 @@ def celda_estado(id):
         flash(("ok", "La celda " + celda["codigo"] + " quedó " + nuevo))
     con.close()
     return redirect("/celdas")
+
+
+# ---------------- vehículos y tarifas (iteración 3) ----------------
+
+@app.route("/vehiculos")
+def vehiculos():
+    if not hay_sesion():
+        return redirect("/login")
+    con = conectar()
+    lista = con.execute("SELECT * FROM vehiculo ORDER BY placa").fetchall()
+    con.close()
+    return render_template("vehiculos.html", vehiculos=lista)
+
+
+@app.route("/vehiculos/nuevo", methods=["POST"])
+def vehiculo_nuevo():
+    if not hay_sesion():
+        return redirect("/login")
+    placa = request.form["placa"].strip().upper()
+    tipo = request.form["tipo"]
+    con = conectar()
+    existe = con.execute("SELECT * FROM vehiculo WHERE placa = ?", (placa,)).fetchone()
+    if placa == "":
+        flash(("error", "Escribe la placa del vehículo"))
+    elif tipo not in ("carro", "moto"):
+        flash(("error", "El tipo debe ser carro o moto"))
+    elif existe:
+        flash(("error", "La placa " + placa + " ya existe"))
+    else:
+        con.execute("INSERT INTO vehiculo(placa, tipo) VALUES (?, ?)", (placa, tipo))
+        con.commit()
+        flash(("ok", "Vehículo registrado correctamente"))
+    con.close()
+    return redirect("/vehiculos")
+
+
+@app.route("/tarifas")
+def tarifas():
+    bloqueo = revisar_admin()
+    if bloqueo:
+        return bloqueo
+    con = conectar()
+    lista = con.execute("SELECT * FROM tarifa ORDER BY tipo").fetchall()
+    con.close()
+    return render_template("tarifas.html", tarifas=lista)
+
+
+@app.route("/tarifas/guardar", methods=["POST"])
+def tarifa_guardar():
+    bloqueo = revisar_admin()
+    if bloqueo:
+        return bloqueo
+    tipo = request.form["tipo"]
+    try:
+        valor = int(request.form["valor"])
+    except ValueError:
+        valor = 0
+    if valor <= 0:
+        flash(("error", "El valor debe ser un número mayor que cero"))
+    else:
+        con = conectar()
+        con.execute("UPDATE tarifa SET valor = ? WHERE tipo = ?", (valor, tipo))
+        con.commit()
+        con.close()
+        flash(("ok", "Tarifa de " + tipo + " actualizada"))
+    return redirect("/tarifas")
 
 
 if __name__ == "__main__":

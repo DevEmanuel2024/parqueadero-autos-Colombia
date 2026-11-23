@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block contenido %}
+<div class="tarjetas">
+  <div class="card" style="max-width: 300px;">
+    <h3>Registrar vehículo</h3>
+    <form method="post" action="/vehiculos/nuevo">
+      <input name="placa" placeholder="Placa (ej: ABC123)" required>
+      <select name="tipo">
+        <option value="carro">Tipo de vehículo: Carro</option>
+        <option value="moto">Tipo de vehículo: Moto</option>
+      </select>
+      <button class="azul">Guardar</button>
+    </form>
+  </div>
+  <div class="card">
+    <h3>Vehículos registrados</h3>
+    <table>
+      <tr><th>Placa</th><th>Tipo</th></tr>
+      {% for v in vehiculos %}
+      <tr><td>{{ v.placa }}</td><td>{{ v.tipo }}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+{% endblock %}

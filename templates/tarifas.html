@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block contenido %}
+<div class="card" style="max-width: 450px; margin: 0 auto;">
+  <h3>Tarifas mensuales</h3>
+  <table>
+    <tr><th>Tipo</th><th>Valor actual</th><th>Nuevo valor</th></tr>
+    {% for t in tarifas %}
+    <tr>
+      <form method="post" action="/tarifas/guardar">
+        <td>{{ t.tipo }}<input type="hidden" name="tipo" value="{{ t.tipo }}"></td>
+        <td>{{ t.valor|pesos }}</td>
+        <td><input name="valor" placeholder="Ej: 120000" required style="width: 110px;"> <button class="azul">Guardar</button></td>
+      </form>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}
